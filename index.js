@@ -3,7 +3,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 const mongoose = require("mongoose");
-const { ApolloServer, gql } = require("apollo-server");
+const { ApolloServer, gql, UserInputError } = require("apollo-server");
 const { v1: uuid } = require("uuid");
 let { authors, books } = require("./startingData");
 const Book = require("./models/book");
@@ -95,15 +95,27 @@ const resolvers = {
           });
       const book = new Book({ ...args, author: author._id.toString() });
       author.books = author.books.concat(book._id);
-      await book.save();
-      await author.save();
+      try {
+        await author.save();
+        await book.save();
+      } catch (err) {
+        throw new UserInputError(err.message, {
+          invalidArgs: args,
+        });
+      }
       return book;
     },
     editAuthor: async (root, args) => {
       const foundAuthor = await Author.findOne({ name: args.name });
-      if (!foundAuthor) return null;
+      if (!foundAuthor) throw new UserInputError("Author not found");
       foundAuthor.born = args.setBornTo;
-      await foundAuthor.save();
+      try {
+        await foundAuthor.save();
+      } catch (err) {
+        throw new UserInputError(err.message, {
+          invalidArgs: args,
+        });
+      }
       return foundAuthor;
     },
   },
