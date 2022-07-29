@@ -75,15 +75,17 @@ const resolvers = {
           });
       const book = new Book({ ...args, author: author._id.toString() });
       author.books = author.books.concat(book._id);
+      let savedBook = null;
       try {
         await author.save();
-        await book.save();
+        savedBook = await (await book.save()).populate("author");
+        console.log("savedBook", savedBook);
+        return savedBook;
       } catch (err) {
         throw new UserInputError(err.message, {
           invalidArgs: args,
         });
       }
-      return book;
     },
     editAuthor: async (root, args, context) => {
       const currentUser = context.currentUser;
