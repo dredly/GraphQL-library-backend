@@ -37,6 +37,13 @@ const resolvers = {
       const foundAuthors = await Author.find({});
       return foundAuthors;
     },
+    allGenres: async () => {
+      const allBooks = await Book.find({});
+      const genres = new Set(
+        allBooks.map((b) => b.genres).reduce((a, b) => a.concat(b))
+      );
+      return [...genres];
+    },
     me: (root, args, context) => context.currentUser,
   },
   Mutation: {
